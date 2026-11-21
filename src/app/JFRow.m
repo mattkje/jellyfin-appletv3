@@ -86,7 +86,7 @@ NSURL *JFCardImageURL(NSDictionary *item, JFShape shape) {
 
         _caption = JFLabel(14, NO, JFColorDim());
         _caption.frame = CGRectMake(0, sz.height + JFS(8), sz.width, JFS(20));
-        _caption.text = [item[@"Type"] isEqualToString:@"Episode"] ? item[@"SeriesName"] : item[@"Name"];
+        _caption.text = JFDisplayTitle(item);   // "S1:E2 · Title" for episodes
         _caption.alpha = 0;
         [self addSubview:_caption];
 

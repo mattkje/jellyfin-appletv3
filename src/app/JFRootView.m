@@ -23,7 +23,7 @@
         // hung under it shows upside down on the TV.  Flipping here once puts
         // the whole app back.  (renderInContext screenshots ignore BackRow's
         // flip, so `make shot` flips the capture back.)
-        self.layer.geometryFlipped = YES;
+        if (NSClassFromString(@"BRWindow")) self.layer.geometryFlipped = YES;   // only under BackRow
         self.backgroundColor = [UIColor colorWithRed:0.063 green:0.063 blue:0.063 alpha:1];
         self.clipsToBounds = YES;
         _stack = [NSMutableArray array];

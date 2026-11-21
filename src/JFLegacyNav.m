@@ -68,8 +68,13 @@ static void BLCat_activated(id self, SEL _cmd) {
         id ctl = [app controllerForIdentifier:@"jellyfin" args:nil];
         if (ctl) [[self stack] pushController:ctl];
     } else {
+        // Popping from inside the list's own activation is ignored by the stack,
+        // which left the list (question-mark icons) on screen; pop once it is up.
         jf_log(@"back from Jellyfin: closing category list");
-        [[self stack] popController];
+        id stack = [self stack];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC / 4), dispatch_get_main_queue(), ^{
+            [stack popController];
+        });
     }
 }
 

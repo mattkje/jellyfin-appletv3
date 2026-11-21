@@ -61,6 +61,9 @@ NSString *const JFItemFields = @"Overview,PrimaryImageAspectRatio,ProductionYear
 @implementation JFHomeScreen {
     JFBackdrop *_backdrop;
     UILabel *_title, *_meta, *_overview, *_user;
+    NSArray *_headerButtons;      // UILabel pills: Change Server, Sign Out
+    BOOL _inHeader;
+    NSInteger _headerIndex;
     UIView *_rowsView;
     NSMutableArray *_rows;        // JFRow, in display order
     NSInteger _focusRow;
@@ -81,9 +84,27 @@ NSString *const JFItemFields = @"Overview,PrimaryImageAspectRatio,ProductionYear
         logo.text = @"Jellyfin";
         logo.frame = CGRectMake(JFS(64), JFS(30), JFS(200), JFS(30));
         [self addSubview:logo];
+        // Header actions, reached with Up from the top row.
+        NSMutableArray *buttons = [NSMutableArray array];
+        CGFloat x = W - JFS(64);
+        for (NSString *t in @[@"Sign Out", @"Change Server"]) {
+            UILabel *b = JFLabel(15, YES, JFColorDim());
+            b.text = t;
+            b.textAlignment = NSTextAlignmentCenter;
+            CGFloat w = [t sizeWithAttributes:@{NSFontAttributeName: b.font}].width + JFS(36);
+            x -= w;
+            b.frame = CGRectMake(x, JFS(28), w, JFS(34));
+            b.layer.cornerRadius = JFS(17);
+            b.layer.borderWidth = JFS(1.5);
+            b.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.18].CGColor;
+            [self addSubview:b];
+            [buttons insertObject:b atIndex:0];
+            x -= JFS(12);
+        }
+        _headerButtons = buttons;
         _user = JFLabel(17, NO, JFColorDim());
         _user.textAlignment = NSTextAlignmentRight;
-        _user.frame = CGRectMake(W - JFS(400), JFS(34), JFS(336), JFS(24));
+        _user.frame = CGRectMake(x - JFS(300), JFS(33), JFS(288), JFS(24));
         _user.text = [JFServer shared].userName;
         [self addSubview:_user];
 
@@ -225,8 +246,20 @@ static NSArray *jf_row_order(void) { return @[@"resume", @"nextup", @"views"]; }
 }
 
 - (void)arrow:(JFKey)k {
-    if (!_rows.count) return;
+    if (_inHeader) {
+        if (k == JFKeyDown && _rows.count) { _inHeader = NO; [self layoutHeader]; [self layoutRows:YES]; }
+        else if (k == JFKeyLeft && _headerIndex > 0) { _headerIndex--; [self layoutHeader]; }
+        else if (k == JFKeyRight && _headerIndex < (NSInteger)_headerButtons.count - 1) { _headerIndex++; [self layoutHeader]; }
+        return;
+    }
+    if (!_rows.count) { if (k == JFKeyUp) { _inHeader = YES; [self layoutHeader]; } return; }
     JFRow *r = _rows[_focusRow];
+    if (k == JFKeyUp && _focusRow == 0) {
+        _inHeader = YES;
+        r.active = NO;
+        [self layoutHeader];
+        return;
+    }
     if (k == JFKeyLeft) [r move:-1];
     else if (k == JFKeyRight) [r move:1];
     else {
@@ -238,7 +271,26 @@ static NSArray *jf_row_order(void) { return @[@"resume", @"nextup", @"views"]; }
     }
 }
 
+- (void)layoutHeader {
+    [UIView animateWithDuration:0.2 animations:^{
+        for (NSInteger i = 0; i < (NSInteger)self->_headerButtons.count; i++) {
+            UILabel *b = self->_headerButtons[i];
+            BOOL on = self->_inHeader && i == self->_headerIndex;
+            b.layer.backgroundColor = (on ? [UIColor whiteColor] : [UIColor clearColor]).CGColor;
+            b.textColor = on ? [UIColor blackColor] : JFColorDim();
+            b.transform = on ? CGAffineTransformMakeScale(1.06, 1.06) : CGAffineTransformIdentity;
+        }
+    }];
+}
+
 - (void)key:(JFKey)k {
+    if (_inHeader) {
+        if (k != JFKeySelect) return;
+        JFServer *srv = [JFServer shared];
+        if (_headerIndex == 1) [srv signOut]; else [srv forgetServer];
+        [self.nav replaceWithScreen:[[JFConnectScreen alloc] initWithFrame:self.bounds]];
+        return;
+    }
     if ((k == JFKeySelect || k == JFKeyPlayPause) && _focusRow < (NSInteger)_rows.count) {
         JFRow *r = _rows[_focusRow];
         NSDictionary *item = r.focusedItem;

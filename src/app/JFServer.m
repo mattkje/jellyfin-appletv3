@@ -4,7 +4,14 @@
 #import <netinet/in.h>
 #import <arpa/inet.h>
 
-#define JF_SETTINGS @"/var/mobile/Library/Preferences/org.jellyfin.atv3.plist"
+// On the Apple TV next to AppleTV.app's own preferences; anywhere else (the
+// simulator screenshot tool) in the temporary directory.
+static NSString *jf_settings_path(void) {
+    NSString *dir = @"/var/mobile/Library/Preferences";
+    if (![[NSFileManager defaultManager] isWritableFileAtPath:dir]) dir = NSTemporaryDirectory();
+    return [dir stringByAppendingPathComponent:@"org.jellyfin.atv3.plist"];
+}
+#define JF_SETTINGS jf_settings_path()
 #define JF_CLIENT   @"Jellyfin for Apple TV 3"
 #define JF_VERSION  @"0.1.0"
 
@@ -219,8 +226,32 @@ static NSArray *jf_discover_blocking(void) {
 - (void)cancelQuickConnect { self.qcCancelled = YES; }
 
 - (void)signOut {
+    if (self.token) [self post:@"/Sessions/Logout" query:nil body:nil done:nil];   // revokes this device's token
     [self.settings removeObjectsForKeys:@[@"Token", @"UserId", @"UserName"]];
     [self save];
+}
+
+- (void)forgetServer {
+    [self signOut];
+    [self.settings removeObjectsForKeys:@[@"Address", @"ServerName"]];
+    [self save];
+}
+
+- (void)useAddress:(NSString *)address {
+    self.settings[@"Address"] = address;
+    [self save];
+}
+
+- (void)signInWithUser:(NSString *)user password:(NSString *)password done:(void (^)(NSError *))done {
+    [self post:@"/Users/AuthenticateByName" query:nil body:@{@"Username": user, @"Pw": password ?: @""}
+          done:^(id auth, NSError *err) {
+        if (err || !auth[@"AccessToken"]) { done(err ?: [NSError errorWithDomain:@"Jellyfin" code:3 userInfo:nil]); return; }
+        self.settings[@"Token"] = auth[@"AccessToken"];
+        self.settings[@"UserId"] = auth[@"User"][@"Id"];
+        self.settings[@"UserName"] = auth[@"User"][@"Name"];
+        [self save];
+        done(nil);
+    }];
 }
 
 @end

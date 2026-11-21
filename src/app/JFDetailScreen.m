@@ -136,13 +136,15 @@
     [_buttons removeAllObjects];
     long long pos = [_item[@"UserData"][@"PlaybackPositionTicks"] longLongValue];
     NSMutableArray *titles = [NSMutableArray array];
+    // U+FE0E asks for the text glyph; a bare U+25B6 becomes a blue emoji.
     if (pos > 0) {
-        long secs = (long)(pos / 10000000LL);
-        [titles addObject:[NSString stringWithFormat:@"▶  Resume %ld:%02ld%@", secs / 3600 ? secs / 3600 : secs / 60,
-                           secs / 3600 ? (secs / 60) % 60 : secs % 60, secs / 3600 ? @" h" : @""]];
-        [titles addObject:@"↺  From Start"];
+        long s = (long)(pos / 10000000LL);
+        NSString *at = s >= 3600 ? [NSString stringWithFormat:@"%ld:%02ld:%02ld", s / 3600, (s / 60) % 60, s % 60]
+                                 : [NSString stringWithFormat:@"%ld:%02ld", s / 60, s % 60];
+        [titles addObject:[NSString stringWithFormat:@"▶︎  Resume from %@", at]];
+        [titles addObject:@"↺︎  From Start"];
     } else {
-        [titles addObject:@"▶  Play"];
+        [titles addObject:@"▶︎  Play"];
     }
     CGFloat x = JFS(64), y = JFS(370);
     for (NSString *t in titles) {

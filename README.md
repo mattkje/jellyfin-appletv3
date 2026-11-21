@@ -15,12 +15,22 @@ TV home screen.
 - Progress is reported back, so resume points and Continue Watching follow you to
   every other Jellyfin client
 
+| | |
+|---|---|
+| ![Home](docs/screenshots/home.jpg) | ![Sign in with Quick Connect](docs/screenshots/signin.jpg) |
+| ![Library](docs/screenshots/library.jpg) | ![Movie details](docs/screenshots/movie.jpg) |
+| ![Series and episodes](docs/screenshots/series.jpg) | |
+
+<sub>Screenshots: the app's UI code running in the iOS Simulator against
+Jellyfin's [public demo server](https://demo.jellyfin.org) (`make screenshots`).</sub>
+
 Tested on an Apple TV 3 rev A (A1469, `AppleTV3,2`) on 8.4.4 jailbroken with
 [blackb0x](https://github.com/NSSpiral/blackb0x), against Jellyfin Server 12.4.
 
 ## Status
 
-It works, but it's early. Known issue: Menu doesn't leave the app yet.
+It works, but it's early. Up from the top row of Home reaches **Change Server**
+and **Sign Out**. Known issue: Menu doesn't leave the app yet.
 
 ## Building
 
@@ -65,6 +75,7 @@ Over USB, with the app loaded:
 | `make open` | open Jellyfin as if chosen from the menu |
 | `make key K="down right select"` | press remote buttons |
 | `make shot` | screenshot of the app to `build/shot.png` |
+| `make screenshots` | regenerate the README screenshots in the iOS Simulator |
 
 The app logs to the syslog with a `[Jellyfin]` prefix (`idevicesyslog`).
 `tools/waitlog.sh` waits for a new matching line.

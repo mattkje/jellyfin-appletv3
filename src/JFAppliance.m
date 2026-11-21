@@ -121,7 +121,7 @@ static id JFCtl_init(id self, SEL _cmd) {
     if ((self = JFCtl_init_orig(self, _cmd))) {
         JFRootView *v = [[JFRootView alloc] initWithFrame:[BRWindowCls interfaceFrame]];
         id ctl = self;
-        v.onExit = ^{ [[ctl stack] popController]; };
+        v.onExit = ^{ jf_log(@"exit: popping Jellyfin"); [[ctl stack] popController]; };
         [self setJfView:v];
         [v release];
     }
@@ -173,8 +173,8 @@ static BOOL JFCtl_event(id self, SEL _cmd, id event) {
     int action = jf_int(event, @selector(remoteAction));
     int value  = jf_int(event, @selector(value));
     JFKey k = jf_key(action);
+    jf_log(@"remote action %d value %d -> key %d", action, value, k);
     if (k == JFKeyNone) {
-        NSLog(@"[Jellyfin] unhandled remote action %d value %d", action, value);
         return JFCtl_event_orig(self, _cmd, event);
     }
     BOOL pressed = value == 1;

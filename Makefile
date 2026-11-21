@@ -104,3 +104,44 @@ shots:
 	afcclient get /jf_log.txt build/jf_log.txt >/dev/null 2>&1; tail -30 build/jf_log.txt
 
 .PHONY: all sdk deploy reload open key shot shots clean
+
+# ---- screenshots ------------------------------------------------------------------------
+# The app's UI code in the iOS Simulator (tools/shots), against Jellyfin's
+# public demo server, so no personal library ends up in the pictures.
+SIMSDK   = $(shell xcrun --sdk iphonesimulator --show-sdk-path)
+SIMAPP  := build/shots/Shots.app
+SIMDEV  ?= iPad Pro 11-inch (M5)
+DEMO    := https://demo.jellyfin.org/stable
+SHOTDIR := $(CURDIR)/docs/screenshots
+
+$(SIMAPP): tools/shots/main.m $(APPSRCS) $(wildcard src/app/*.h) src/JFRootView.h
+	@mkdir -p $@
+	xcrun clang -target arm64-apple-ios15.0-simulator -isysroot $(SIMSDK) -fobjc-arc -O1 -w \
+	  -Isrc -Isrc/app tools/shots/main.m $(APPSRCS) -o $@/Shots \
+	  -framework UIKit -framework Foundation -framework CoreGraphics -framework AVFoundation -framework CoreMedia -framework QuartzCore
+	plutil -create xml1 $@/Info.plist
+	plutil -insert CFBundleIdentifier -string org.jellyfin.atv3.shots $@/Info.plist
+	plutil -insert CFBundleExecutable -string Shots $@/Info.plist
+	plutil -insert CFBundleName -string Shots $@/Info.plist
+	plutil -insert CFBundleVersion -string 1 $@/Info.plist
+	plutil -insert CFBundleShortVersionString -string 1.0 $@/Info.plist
+	plutil -insert UIApplicationSceneManifest -json '{"UIApplicationSupportsMultipleScenes":false,"UISceneConfigurations":{"UIWindowSceneSessionRoleApplication":[{"UISceneConfigurationName":"Default","UISceneDelegateClassName":"ShotsScene"}]}}' $@/Info.plist
+	codesign -f -s - $@
+
+# Run one step list in the simulator: make shots-run STEPS="server ...; open; ..."
+shots-run: $(SIMAPP)
+	@mkdir -p $(SHOTDIR)
+	xcrun simctl boot "$(SIMDEV)" 2>/dev/null || true
+	xcrun simctl install "$(SIMDEV)" $(SIMAPP)
+	SIMCTL_CHILD_JF_STEPS="$(STEPS)" SIMCTL_CHILD_JF_OUT="$(SHOTDIR)" \
+	  xcrun simctl launch --console-pty --terminate-running-process "$(SIMDEV)" org.jellyfin.atv3.shots | grep --line-buffered '\[shots\]'
+
+# All README screenshots (docs/screenshots/*.jpg), from the public demo server.
+screenshots: $(SIMAPP)
+	xcrun simctl boot "$(SIMDEV)" 2>/dev/null || true
+	xcrun simctl install "$(SIMDEV)" $(SIMAPP)
+	tools/shots/run.sh "server $(DEMO); open; wait 5; shot signin; quit" signin
+	tools/shots/run.sh "server $(DEMO); login demo; open; wait 9; shot home; key down; wait 2; key select; wait 6; shot library; key right; wait 1; key select; wait 6; shot movie; quit" movie
+	tools/shots/run.sh "server $(DEMO); login demo; open; wait 9; key down; wait 1; key right right right; wait 1; key select; wait 6; key select; wait 8; key down; wait 4; shot series; quit" series
+
+.PHONY: screenshots shots-run

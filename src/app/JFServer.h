@@ -27,6 +27,11 @@ typedef void (^JFJSONBlock)(id json, NSError *error);
                      done:(void (^)(NSError *error))done;
 - (void)cancelQuickConnect;
 - (void)signOut;
+- (void)forgetServer;            // sign out and look for a server again
+
+// Username / password sign-in (also used by the simulator screenshot tool).
+- (void)useAddress:(NSString *)address;
+- (void)signInWithUser:(NSString *)user password:(NSString *)password done:(void (^)(NSError *error))done;
 
 - (void)get:(NSString *)path query:(NSDictionary *)query done:(JFJSONBlock)done;
 - (void)post:(NSString *)path query:(NSDictionary *)query body:(id)body done:(JFJSONBlock)done;
