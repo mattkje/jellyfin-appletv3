@@ -1,0 +1,6 @@
+build/
+sdk/
+keys/
+*.o
+.DS_Store
+tools/afc2
