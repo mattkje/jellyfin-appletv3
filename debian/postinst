@@ -1,0 +1,24 @@
+#!/bin/sh
+# beigelist loads appliances from AppleTV.app/Appliances, but a real folder
+# there crashes it; a link to the bundle (as Kodi's) works.
+APP=/Applications/Jellyfin.frappliance
+LINK=/Applications/AppleTV.app/Appliances/Jellyfin.frappliance
+if [ -d "$LINK" ] && [ ! -L "$LINK" ]; then
+  echo "Jellyfin: $LINK is a folder, not a link; remove it and reinstall." >&2
+else
+  ln -sfn "$APP" "$LINK"
+fi
+
+# The main menu draws icons from its own cache, <bundle id>@720/@1080.png.
+CACHE=/var/mobile/Library/Caches/AppleTV/MainMenu
+mkdir -p "$CACHE"
+for r in 720 1080; do
+  f=com.apple.frontrow.appliance.jellyfin@$r.png
+  rm -f "$CACHE/$f"
+  cp "$APP/menu/$f" "$CACHE/$f"
+  chown mobile:mobile "$CACHE/$f"
+done
+
+# Restart the main menu so it picks up the new build (launchd relaunches it).
+killall -9 AppleTV 2>/dev/null
+exit 0

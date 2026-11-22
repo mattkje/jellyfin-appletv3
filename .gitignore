@@ -4,3 +4,4 @@ keys/
 *.o
 .DS_Store
 tools/afc2
+__pycache__/

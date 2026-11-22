@@ -1,0 +1,7 @@
+#!/bin/sh
+if [ "$1" = remove ] || [ "$1" = purge ]; then
+  rm -f /Applications/AppleTV.app/Appliances/Jellyfin.frappliance
+  rm -f /var/mobile/Library/Caches/AppleTV/MainMenu/com.apple.frontrow.appliance.jellyfin@*.png
+  killall -9 AppleTV 2>/dev/null
+fi
+exit 0

@@ -44,6 +44,35 @@ make           # builds build/Jellyfin.frappliance
 
 ## Installing
 
+### With apt (recommended)
+
+blackb0x installs Cydia's package tools (`apt-get`, `dpkg`) on the Apple TV,
+without the Cydia screen. The package links the app into the main menu and sets
+its icon, so nothing else is needed.
+
+`make repo` builds the `.deb` and its index in `build/repo`. Serve that folder
+from any machine on your network over **plain HTTP**: the Apple TV's OpenSSL
+0.9.8 can't connect to today's HTTPS servers, so GitHub Pages won't work.
+
+```sh
+make publish REPO_DEST=myserver:/srv/atv-repo   # rsync build/repo there
+```
+
+On the Apple TV (over SSH, as root):
+
+```sh
+echo 'deb http://myserver:8098/ ./' > /etc/apt/sources.list.d/jellyfin.list
+apt-get update
+apt-get install org.jellyfin.atv3
+```
+
+There is no signed `Release` file, so apt asks to install without
+verification. Updates: bump `CFBundleVersion` in `Info.plist`,
+`make publish`, then `apt-get update && apt-get install org.jellyfin.atv3`.
+`apt-get remove org.jellyfin.atv3` takes it off the main menu again.
+
+### Over USB, for development
+
 Connect the Apple TV to the Mac with micro-USB **while it is already running**.
 If you power it on with the cable attached, it starts in Recovery Mode. The HDMI
 output is off while USB is connected.

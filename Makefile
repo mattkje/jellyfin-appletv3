@@ -105,6 +105,34 @@ shots:
 
 .PHONY: all sdk deploy reload open key shot shots clean
 
+# ---- package and apt repo ---------------------------------------------------------------
+# A .deb for the Apple TV's own apt/dpkg (installed by blackb0x).  Installing it
+# links the bundle into AppleTV.app/Appliances and fills the menu icon cache
+# (debian/postinst), so no SSH or `make deploy` is needed.  The Apple TV's
+# OpenSSL 0.9.8 cannot talk to today's HTTPS servers: serve the repo over HTTP.
+VERSION := $(shell plutil -extract CFBundleVersion raw Info.plist)
+DEB     := build/repo/org.jellyfin.atv3_$(VERSION)_iphoneos-arm.deb
+MENUICONS := build/menucache/com.apple.frontrow.appliance.jellyfin@720.png
+
+deb: $(DEB)
+$(DEB): $(BUNDLE) $(MENUICONS) resources/English.lproj/InfoPlist.strings $(wildcard debian/*) tools/package.py
+	rm -rf build/debroot && mkdir -p build/debroot/Applications build/repo
+	cp -R $(BUNDLE) build/debroot/Applications/
+	cp -R resources/English.lproj build/debroot$(APPDIR)/
+	mkdir -p build/debroot$(APPDIR)/menu && cp build/menucache/*.png build/debroot$(APPDIR)/menu/
+	python3 tools/package.py deb build/debroot debian $(VERSION) $@
+
+# build/repo: the .deb files and their Packages index.
+repo: $(DEB)
+	python3 tools/package.py index build/repo
+
+# Copy the repo to a web server: make publish REPO_DEST=host:/srv/atv-repo
+publish: repo
+	@test -n "$(REPO_DEST)" || { echo "usage: make publish REPO_DEST=host:/path"; exit 1; }
+	rsync -rtv --delete build/repo/ $(REPO_DEST)/
+
+.PHONY: deb repo publish
+
 # ---- screenshots ------------------------------------------------------------------------
 # The app's UI code in the iOS Simulator (tools/shots), against Jellyfin's
 # public demo server, so no personal library ends up in the pictures.
