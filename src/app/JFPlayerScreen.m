@@ -1,4 +1,5 @@
 #import "JFScreens.h"
+#import <objc/message.h>
 #import "JFServer.h"
 #import "JFLog.h"
 #import <AVFoundation/AVFoundation.h>
@@ -274,7 +275,21 @@ static NSDictionary *jf_device_profile(void) {
                            @"CanSeek": @YES, @"PlayMethod": _playMethod ?: @"Transcode"};
     [[JFServer shared] post:path query:nil body:body done:nil];
 }
-- (void)progressTick { [self report:@"/Sessions/Playing/Progress"]; }
+// AppleTV.app holds back its screensaver only while its own media player
+// plays; this one is AVPlayer, so the screensaver came on mid-film (sound
+// still playing under it).  While playing, tell its manager there is
+// activity, as a remote press would.
+static void jf_hold_off_screensaver(void) {
+    id manager = [NSClassFromString(@"ATVScreenSaverManager") performSelector:@selector(singleton)];
+    SEL activity = NSSelectorFromString(@"_updateActivity:");
+    if ([manager respondsToSelector:activity])
+        ((void (*)(id, SEL, id))objc_msgSend)(manager, activity, nil);
+}
+
+- (void)progressTick {
+    [self report:@"/Sessions/Playing/Progress"];
+    if (_player.rate > 0) jf_hold_off_screensaver();
+}
 
 - (void)screenWillDisappear {
     if (_stopped) return;
