@@ -111,7 +111,7 @@ shots:
 # (debian/postinst), so no SSH or `make deploy` is needed.  The Apple TV's
 # OpenSSL 0.9.8 cannot talk to today's HTTPS servers: serve the repo over HTTP.
 VERSION := $(shell plutil -extract CFBundleVersion raw Info.plist)
-DEB     := build/repo/org.jellyfin.atv3_$(VERSION)_iphoneos-arm.deb
+DEB     := build/repo/io.github.mattkje.jellyfin_$(VERSION)_iphoneos-arm.deb
 MENUICONS := build/menucache/com.apple.frontrow.appliance.jellyfin@720.png
 
 deb: $(DEB)
@@ -126,10 +126,12 @@ $(DEB): $(BUNDLE) $(MENUICONS) resources/English.lproj/InfoPlist.strings $(wildc
 repo: $(DEB)
 	python3 tools/package.py index build/repo
 
-# Copy the repo to a web server: make publish REPO_DEST=host:/srv/atv-repo
-publish: repo
+# Copy the .deb to a repo on a web server and re-index everything there (other
+# packages in the same repo, such as Veyra, stay): make publish REPO_DEST=host:/srv/atv-repo
+publish: $(DEB)
 	@test -n "$(REPO_DEST)" || { echo "usage: make publish REPO_DEST=host:/path"; exit 1; }
-	rsync -rtv --delete build/repo/ $(REPO_DEST)/
+	rsync -t $(DEB) $(REPO_DEST)/
+	ssh $(firstword $(subst :, ,$(REPO_DEST))) python3 - index $(lastword $(subst :, ,$(REPO_DEST))) < tools/package.py
 
 .PHONY: deb repo publish
 
@@ -148,7 +150,7 @@ $(SIMAPP): tools/shots/main.m $(APPSRCS) $(wildcard src/app/*.h) src/JFRootView.
 	  -Isrc -Isrc/app tools/shots/main.m $(APPSRCS) -o $@/Shots \
 	  -framework UIKit -framework Foundation -framework CoreGraphics -framework AVFoundation -framework CoreMedia -framework QuartzCore
 	plutil -create xml1 $@/Info.plist
-	plutil -insert CFBundleIdentifier -string org.jellyfin.atv3.shots $@/Info.plist
+	plutil -insert CFBundleIdentifier -string io.github.mattkje.jellyfin.shots $@/Info.plist
 	plutil -insert CFBundleExecutable -string Shots $@/Info.plist
 	plutil -insert CFBundleName -string Shots $@/Info.plist
 	plutil -insert CFBundleVersion -string 1 $@/Info.plist
@@ -162,7 +164,7 @@ shots-run: $(SIMAPP)
 	xcrun simctl boot "$(SIMDEV)" 2>/dev/null || true
 	xcrun simctl install "$(SIMDEV)" $(SIMAPP)
 	SIMCTL_CHILD_JF_STEPS="$(STEPS)" SIMCTL_CHILD_JF_OUT="$(SHOTDIR)" \
-	  xcrun simctl launch --console-pty --terminate-running-process "$(SIMDEV)" org.jellyfin.atv3.shots | grep --line-buffered '\[shots\]'
+	  xcrun simctl launch --console-pty --terminate-running-process "$(SIMDEV)" io.github.mattkje.jellyfin.shots | grep --line-buffered '\[shots\]'
 
 # All README screenshots (docs/screenshots/*.jpg), from the public demo server.
 screenshots: $(SIMAPP)

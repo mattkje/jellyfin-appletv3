@@ -20,6 +20,11 @@ NSGraphicsContext.saveGraphicsState()
 NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
 NSGraphicsContext.current?.imageInterpolation = .high
 
+// Rounded corners cut out as transparency, as every cached main-menu icon has
+// (radius about 5.3% of the width: 10 px at 188, 15 px at 284).  The menu
+// draws unfocused icons as they are, so a full rectangle shows square corners.
+let radius = (W * 0.053).rounded()
+NSBezierPath(roundedRect: NSRect(x: 0, y: 0, width: W, height: H), xRadius: radius, yRadius: radius).addClip()
 NSColor(red: 0.0, green: 0.043, blue: 0.145, alpha: 1).setFill()          // #000B25, the app icon's navy
 NSBezierPath(rect: NSRect(x: 0, y: 0, width: W, height: H)).fill()
 

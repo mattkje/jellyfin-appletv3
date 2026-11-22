@@ -8,8 +8,13 @@
 // simulator screenshot tool) in the temporary directory.
 static NSString *jf_settings_path(void) {
     NSString *dir = @"/var/mobile/Library/Preferences";
-    if (![[NSFileManager defaultManager] isWritableFileAtPath:dir]) dir = NSTemporaryDirectory();
-    return [dir stringByAppendingPathComponent:@"org.jellyfin.atv3.plist"];
+    NSFileManager *fm = [NSFileManager defaultManager];
+    if (![fm isWritableFileAtPath:dir]) dir = NSTemporaryDirectory();
+    NSString *path = [dir stringByAppendingPathComponent:@"io.github.mattkje.jellyfin.plist"];
+    // Up to 0.4 the file was named after the old package id; keep the sign-in.
+    NSString *old = [dir stringByAppendingPathComponent:@"org.jellyfin.atv3.plist"];
+    if (![fm fileExistsAtPath:path] && [fm fileExistsAtPath:old]) [fm moveItemAtPath:old toPath:path error:NULL];
+    return path;
 }
 #define JF_SETTINGS jf_settings_path()
 #define JF_CLIENT   @"Jellyfin for Apple TV 3"

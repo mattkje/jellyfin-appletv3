@@ -61,7 +61,7 @@ NSString *const JFItemFields = @"Overview,PrimaryImageAspectRatio,ProductionYear
 @implementation JFHomeScreen {
     JFBackdrop *_backdrop;
     UILabel *_title, *_meta, *_overview, *_user;
-    NSArray *_headerButtons;      // UILabel pills: Change Server, Sign Out
+    NSArray *_headerButtons;      // UILabel pills: Change Server, Sign Out, Exit
     BOOL _inHeader;
     NSInteger _headerIndex;
     UIView *_rowsView;
@@ -87,7 +87,7 @@ NSString *const JFItemFields = @"Overview,PrimaryImageAspectRatio,ProductionYear
         // Header actions, reached with Up from the top row.
         NSMutableArray *buttons = [NSMutableArray array];
         CGFloat x = W - JFS(64);
-        for (NSString *t in @[@"Sign Out", @"Change Server"]) {
+        for (NSString *t in @[@"Exit", @"Sign Out", @"Change Server"]) {   // laid out right to left
             UILabel *b = JFLabel(15, YES, JFColorDim());
             b.text = t;
             b.textAlignment = NSTextAlignmentCenter;
@@ -286,6 +286,7 @@ static NSArray *jf_row_order(void) { return @[@"resume", @"nextup", @"views"]; }
 - (void)key:(JFKey)k {
     if (_inHeader) {
         if (k != JFKeySelect) return;
+        if (_headerIndex == 2) { [self.nav exitApp]; return; }
         JFServer *srv = [JFServer shared];
         if (_headerIndex == 1) [srv signOut]; else [srv forgetServer];
         [self.nav replaceWithScreen:[[JFConnectScreen alloc] initWithFrame:self.bounds]];

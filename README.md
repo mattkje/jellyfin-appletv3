@@ -4,6 +4,9 @@ A native [Jellyfin](https://jellyfin.org) client for the **jailbroken Apple TV 3
 (2012/2013, tvOS/"Apple TV Software" 8.4.x), running as its own tile on the Apple
 TV home screen.
 
+> **Unofficial.** This is an independent project. It is not made, endorsed or
+> supported by the Jellyfin project; please don't take its issues there.
+
 - Finds your server on the local network by itself
 - Signs in with **Quick Connect**: approve a code from your phone, no typing with
   the remote
@@ -29,8 +32,9 @@ Tested on an Apple TV 3 rev A (A1469, `AppleTV3,2`) on 8.4.4 jailbroken with
 
 ## Status
 
-It works, but it's early. Up from the top row of Home reaches **Change Server**
-and **Sign Out**. Known issue: Menu doesn't leave the app yet.
+It works, but it's early. Up from the top row of Home reaches **Change Server**,
+**Sign Out** and **Exit**. Menu goes back a screen and leaves the app from Home;
+holding Menu leaves from anywhere.
 
 ## Building
 
@@ -55,7 +59,7 @@ from any machine on your network over **plain HTTP**: the Apple TV's OpenSSL
 0.9.8 can't connect to today's HTTPS servers, so GitHub Pages won't work.
 
 ```sh
-make publish REPO_DEST=myserver:/srv/atv-repo   # rsync build/repo there
+make publish REPO_DEST=myserver:/srv/atv-repo   # copy the .deb there and re-index the repo
 ```
 
 On the Apple TV (over SSH, as root):
@@ -63,13 +67,17 @@ On the Apple TV (over SSH, as root):
 ```sh
 echo 'deb http://myserver:8098/ ./' > /etc/apt/sources.list.d/jellyfin.list
 apt-get update
-apt-get install org.jellyfin.atv3
+apt-get install io.github.mattkje.jellyfin
 ```
 
 There is no signed `Release` file, so apt asks to install without
 verification. Updates: bump `CFBundleVersion` in `Info.plist`,
-`make publish`, then `apt-get update && apt-get install org.jellyfin.atv3`.
-`apt-get remove org.jellyfin.atv3` takes it off the main menu again.
+`make publish`, then `apt-get update && apt-get install io.github.mattkje.jellyfin`
+(or Refresh and Update in [Veyra](https://github.com/mattkje/veyra)).
+`apt-get remove io.github.mattkje.jellyfin` takes it off the main menu again.
+
+Up to 0.4 the package was called `org.jellyfin.atv3`. Installing
+`io.github.mattkje.jellyfin` replaces it, and keeps the sign-in.
 
 ### Over USB, for development
 

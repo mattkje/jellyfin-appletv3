@@ -1,10 +1,12 @@
-Package: org.jellyfin.atv3
+Package: io.github.mattkje.jellyfin
 Name: Jellyfin
 Architecture: iphoneos-arm
 Depends: firmware (>= 8.4), beigelist, mobilesubstrate
+Conflicts: org.jellyfin.atv3
+Replaces: org.jellyfin.atv3
 Section: Multimedia
 Maintainer: mattkje
 Author: mattkje
 Homepage: https://github.com/mattkje/jellyfin-appletv3
-Description: Jellyfin client for the jailbroken Apple TV 3
+Description: Unofficial Jellyfin client for the jailbroken Apple TV 3
  Browse and play a Jellyfin library from the Apple TV main menu.

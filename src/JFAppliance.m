@@ -121,7 +121,17 @@ static id JFCtl_init(id self, SEL _cmd) {
     if ((self = JFCtl_init_orig(self, _cmd))) {
         JFRootView *v = [[JFRootView alloc] initWithFrame:[BRWindowCls interfaceFrame]];
         id ctl = self;
-        v.onExit = ^{ jf_log(@"exit: popping Jellyfin"); [[ctl stack] popController]; };
+        v.onExit = ^{
+            jf_log(@"exit: popping Jellyfin");
+            [[ctl stack] popController];
+            // On AppleTV 8.4 with beigelist the pop is sometimes ignored, or the
+            // category list it uncovers opens Jellyfin again.  If any Jellyfin
+            // screen is still up shortly after, quit: the system relaunches
+            // AppleTV.app on the main menu.
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 6 / 10), dispatch_get_main_queue(), ^{
+                if (jf_current_root) { jf_log(@"exit: still open, restarting the main menu"); exit(0); }
+            });
+        };
         [self setJfView:v];
         [v release];
     }

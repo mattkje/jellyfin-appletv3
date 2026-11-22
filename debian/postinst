@@ -20,5 +20,6 @@ for r in 720 1080; do
 done
 
 # Restart the main menu so it picks up the new build (launchd relaunches it).
-killall -9 AppleTV 2>/dev/null
+# Not when Veyra installs it: Veyra offers the restart when the task is done.
+[ -n "$VEYRA" ] || killall -9 AppleTV 2>/dev/null
 exit 0
