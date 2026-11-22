@@ -54,21 +54,21 @@ blackb0x installs Cydia's package tools (`apt-get`, `dpkg`) on the Apple TV,
 without the Cydia screen. The package links the app into the main menu and sets
 its icon, so nothing else is needed.
 
-`make repo` builds the `.deb` and its index in `build/repo`. Serve that folder
-from any machine on your network over **plain HTTP**: the Apple TV's OpenSSL
-0.9.8 can't connect to today's HTTPS servers, so GitHub Pages won't work.
+It's in a public repo, **`http://repo.mattikjellstadli.com/`** (plain `http://`
+on purpose: the Apple TV's OpenSSL 0.9.8 can't connect to today's HTTPS
+servers). With [Veyra](https://github.com/mattkje/veyra) installed, add that as a
+source and install Jellyfin from Available. Or over SSH, as root:
 
 ```sh
-make publish REPO_DEST=myserver:/srv/atv-repo   # copy the .deb there and re-index the repo
-```
-
-On the Apple TV (over SSH, as root):
-
-```sh
-echo 'deb http://myserver:8098/ ./' > /etc/apt/sources.list.d/jellyfin.list
+echo 'deb http://repo.mattikjellstadli.com/ ./' > /etc/apt/sources.list.d/veyra.list
 apt-get update
 apt-get install io.github.mattkje.jellyfin
 ```
+
+To host your own builds: `make repo` builds the `.deb` and its index in
+`build/repo`; serve a folder like that over plain HTTP, and
+`make publish REPO_DEST=myserver:/srv/atv-repo` copies a new build there and
+re-indexes it.
 
 There is no signed `Release` file, so apt asks to install without
 verification. Updates: bump `CFBundleVersion` in `Info.plist`,
