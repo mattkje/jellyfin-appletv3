@@ -131,7 +131,8 @@ repo: $(DEB)
 publish: $(DEB)
 	@test -n "$(REPO_DEST)" || { echo "usage: make publish REPO_DEST=host:/path"; exit 1; }
 	rsync -t $(DEB) $(REPO_DEST)/
-	ssh $(firstword $(subst :, ,$(REPO_DEST))) python3 - index $(lastword $(subst :, ,$(REPO_DEST))) < tools/package.py
+	# The repo's own index script (atv-repo: Release, icons and package pages).
+	ssh $(firstword $(subst :, ,$(REPO_DEST))) atv-repo-index $(lastword $(subst :, ,$(REPO_DEST)))
 
 .PHONY: deb repo publish
 
